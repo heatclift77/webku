@@ -8,14 +8,18 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Models\SalesPage;
 use App\Services\AIService;
+use App\Services\PublishService;
 
 class ProductController extends Controller
 {
     protected AIService $aiService;
 
-    public function __construct(AIService $aiService)
+    protected PublishService $publishService;
+
+    public function __construct(AIService $aiService, PublishService $publishService)
     {
         $this->aiService = $aiService;
+        $this->publishService = $publishService;
     }
 
     /**
@@ -68,6 +72,7 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $this->authorize('update', $product);
+
         return view('products.edit', compact('product'));
     }
 
@@ -93,6 +98,11 @@ class ProductController extends Controller
     {
         $this->authorize('delete', $product);
 
+        // Delete associated Netlify site if exists
+        if ($product->salesPage && $product->salesPage->site_id) {
+            $this->publishService->deleteSite($product->salesPage->site_id);
+        }
+
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
@@ -110,12 +120,12 @@ class ProductController extends Controller
         try {
             $response = $this->aiService->generateSalesPage($prompt);
             $content = json_decode($response, true);
-            if (!$this->isValidSalesPageContent($content)) {
+            if (! $this->isValidSalesPageContent($content)) {
                 // Retry once
                 $response = $this->aiService->generateSalesPage($prompt);
                 $content = json_decode($response, true);
 
-                if (!$this->isValidSalesPageContent($content)) {
+                if (! $this->isValidSalesPageContent($content)) {
                     return redirect()->route('products.index')->with('error', 'Failed to generate valid sales page content. Please try again.');
                 }
             }
@@ -129,7 +139,7 @@ class ProductController extends Controller
             return redirect()->route('products.show', $product)->with('success', 'Sales page generated successfully.');
 
         } catch (\Exception $e) {
-            return redirect()->route('products.index')->with('error', 'Failed to generate sales page: ' . $e->getMessage());
+            return redirect()->route('products.index')->with('error', 'Failed to generate sales page: '.$e->getMessage());
         }
     }
 
@@ -141,7 +151,7 @@ IMPORTANT: Your response must be valid JSON that can be parsed. Do not include a
 
 Product Name: {$product->name}
 Description: {$product->description}
-Features: " . implode(', ', $product->features ?? []) . "
+Features: ".implode(', ', $product->features ?? [])."
 Target Audience: {$product->target_audience}
 Price: \${$product->price}
 Unique Selling Proposition: {$product->usp}
@@ -151,14 +161,14 @@ Make the sales page compelling and persuasive.";
 
     protected function isValidSalesPageContent($content): bool
     {
-        if (!is_array($content)) {
+        if (! is_array($content)) {
             return false;
         }
 
         $requiredKeys = ['headline', 'subheadline', 'description', 'benefits', 'features', 'pricing', 'cta'];
 
         foreach ($requiredKeys as $key) {
-            if (!isset($content[$key]) || !is_string($content[$key])) {
+            if (! isset($content[$key]) || ! is_string($content[$key])) {
                 return false;
             }
         }
@@ -179,7 +189,7 @@ Make the sales page compelling and persuasive.";
             'template' => 'required|string|in:modern,minimal,startup',
         ]);
 
-        if (!$product->salesPage) {
+        if (! $product->salesPage) {
             return redirect()->route('products.show', $product)->with('error', 'No sales page generated yet.');
         }
 

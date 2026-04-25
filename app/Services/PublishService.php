@@ -122,4 +122,48 @@ class PublishService
             throw new Exception($message, previous: $exception);
         }
     }
+
+    public function deleteSite(string $siteId): bool
+    {
+        $token = (string) env('NETLIFY_TOKEN');
+
+        if ($token === '') {
+            \Log::error('Netlify token is not configured.');
+
+            return false;
+        }
+
+        if ($siteId === '') {
+            \Log::error('Site ID is required for deletion.');
+
+            return false;
+        }
+
+        $baseUrl = 'https://api.netlify.com/api/v1';
+
+        try {
+            Http::withToken($token)
+                ->delete("{$baseUrl}/sites/{$siteId}")
+                ->throw();
+
+            return true;
+        } catch (ConnectionException $exception) {
+            \Log::error('Failed to connect to Netlify for site deletion.', [
+                'site_id' => $siteId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return false;
+        } catch (RequestException $exception) {
+            $responseBody = $exception->response?->body();
+            $message = $responseBody ? "Netlify API request failed: {$responseBody}" : 'Netlify API request failed.';
+
+            \Log::error('Netlify site deletion failed.', [
+                'site_id' => $siteId,
+                'error' => $message,
+            ]);
+
+            return false;
+        }
+    }
 }
