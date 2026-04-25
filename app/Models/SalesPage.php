@@ -14,6 +14,9 @@ class SalesPage extends Model
         'product_id',
         'generated_content',
         'template',
+        'published_url',
+        'site_id',
+        'site_url',
     ];
 
     protected $casts = [

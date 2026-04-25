@@ -17,6 +17,17 @@
                     <a href="{{ route('sales-pages.export', $salesPage) }}" class="inline-flex items-center justify-center rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-semibold text-green-700 shadow-sm hover:bg-green-100">
                         ⬇ Download HTML
                     </a>
+                    <form method="POST" action="{{ route('sales-pages.publish', $salesPage) }}" class="inline publish-form">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="inline-flex items-center justify-center rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
+                            data-default-text="{{ $salesPage->published_url ? 'Republish' : 'Publish' }} to Netlify"
+                            data-loading-text="Publishing..."
+                        >
+                            {{ $salesPage->published_url ? 'Republish' : 'Publish' }} to Netlify
+                        </button>
+                    </form>
                 @endif
                 <form method="POST" action="{{ route('products.generate', $product) }}" class="inline">
                     @csrf
@@ -119,6 +130,28 @@
         </div>
 
         @if($salesPage)
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+            <h2 class="text-lg font-semibold text-emerald-900 mb-2">Publish Status</h2>
+            @if($salesPage->site_url)
+                <div class="flex items-center gap-4">
+                    <div>
+                        <p class="text-sm font-medium text-emerald-800">Live URL</p>
+                        <a href="{{ $salesPage->site_url }}" target="_blank" class="text-sm text-emerald-700 underline hover:text-emerald-900">
+                            {{ $salesPage->site_url }}
+                        </a>
+                    </div>
+                    <a href="{{ $salesPage->site_url }}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-300 bg-emerald-100 text-emerald-800 font-medium hover:bg-emerald-200 transition duration-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Open Site
+                    </a>
+                </div>
+            @else
+                <p class="text-sm text-emerald-800">This sales page has not been published yet.</p>
+            @endif
+        </div>
+
         <!-- Template Selector Section -->
         <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <h2 class="text-lg font-semibold text-gray-900 mb-6">Choose Template Design</h2>
@@ -196,4 +229,18 @@
         </div>
         @endif
     </div>
+
+    <script>
+        document.querySelectorAll('.publish-form').forEach((form) => {
+            form.addEventListener('submit', () => {
+                const submitButton = form.querySelector('button[type="submit"]');
+                if (!submitButton) {
+                    return;
+                }
+
+                submitButton.disabled = true;
+                submitButton.textContent = submitButton.dataset.loadingText ?? 'Publishing...';
+            });
+        });
+    </script>
 @endsection

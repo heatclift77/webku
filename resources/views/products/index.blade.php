@@ -81,10 +81,10 @@
                             Edit
                         </a>
 
-                        <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline-block">
+                        <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline-block" id="delete-form-{{ $product->id }}">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-600 font-medium hover:bg-red-50 transition duration-200" onclick="return confirm('Are you sure you want to delete this product?');">
+                            <button type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-300 text-red-600 font-medium hover:bg-red-50 transition duration-200" onclick="openDeleteModal('{{ $product->id }}', '{{ addslashes($product->name) }}')">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
@@ -113,4 +113,52 @@
             </div>
         @endforelse
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Delete Product</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500">
+                        Are you sure you want to delete "<span id="delete-modal-product-name"></span>"? This action cannot be undone.
+                    </p>
+                </div>
+                <div class="flex items-center px-4 py-3 space-x-4">
+                    <button id="cancel-delete-btn" onclick="closeDeleteModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+                        Cancel
+                    </button>
+                    <button id="confirm-delete-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openDeleteModal(productId, productName) {
+            document.getElementById('delete-modal-product-name').textContent = productName;
+            document.getElementById('delete-modal').classList.remove('hidden');
+            document.getElementById('confirm-delete-btn').onclick = function() {
+                document.getElementById('delete-form-' + productId).submit();
+            };
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('delete-modal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeDeleteModal();
+            }
+        });
+    </script>
 @endsection
