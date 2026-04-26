@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $product->name }}</title>
-    @vite(['resources/css/app.css'])
+    @vite(['resources/js/app.jsx'])
 </head>
 <body class="bg-white text-gray-900 font-light">
     <!-- Hero Section -->
